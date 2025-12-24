@@ -1,9 +1,13 @@
 package com.cecurity;
 
 
+import java.io.FileOutputStream;
+import java.security.KeyStore;
 import java.security.Security;
+import java.security.cert.Certificate;
 
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -18,7 +22,7 @@ import org.bouncycastle.util.encoders.Hex;
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
-    static void main()  {
+    static void main() {
 
         IO.println("Hello and welcome!");
 
@@ -26,9 +30,11 @@ public class Main {
             IO.println("i = " + i);
         }
         Security.addProvider(new BouncyCastleFipsProvider("C:HYBRID;ENABLE{ALL};"));
+        Security.addProvider(new BouncyCastleJsseProvider("fips:BCFIPS"));
         try {
             test1();
             test2();
+            test_tls1();
         } catch (Exception e) {
             //e.printStackTrace();
             System.out.println("In main: Exception: " + e.getMessage());
@@ -130,5 +136,23 @@ public class Main {
         System.out.println("data: " + data);
         System.out.println("enc:  " + Hex.toHexString(enc));
         System.out.println("dec:  " + new String(dec));
+    }
+
+
+    static void test_tls1() throws Exception {
+        PrivateCredential cred = PrivateCredential.createSelfSignedCredentials();
+
+        KeyStore store = KeyStore.getInstance("JKS");
+
+        store.load(null, null);
+
+        store.setKeyEntry("key", cred.getPrivateKey(), "keyPass".toCharArray(),
+                new Certificate[]{cred.getCertificate()});
+        System.out.println("store created");
+        FileOutputStream fOut = new FileOutputStream("basic.jks");
+
+        store.store(fOut, "storePass".toCharArray());
+        System.out.println("store saved");
+        fOut.close();
     }
 }
