@@ -18,7 +18,7 @@ import org.bouncycastle.util.encoders.Hex;
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
-    static void main() throws Exception {
+    static void main()  {
 
         IO.println("Hello and welcome!");
 
@@ -37,6 +37,8 @@ public class Main {
         }
     }
 
+    @org.jetbrains.annotations.NotNull
+    @org.jetbrains.annotations.Contract(" -> new")
     static SecretKey createConstantKey() {
         return new SecretKeySpec(
                 Hex.decode("000102030405060708090a0b0c0d0e0f"), "AES");
