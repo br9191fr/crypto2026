@@ -1,16 +1,18 @@
 package com.cecurity;
 
-import java.security.GeneralSecurityException;
+
 import java.security.Security;
+
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.*;
-import javax.crypto.spec.SecretKeySpec;
+
 
 import org.bouncycastle.jcajce.spec.AEADParameterSpec;
+import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
@@ -26,17 +28,68 @@ public class Main {
         Security.addProvider(new BouncyCastleFipsProvider("C:HYBRID;ENABLE{ALL};"));
         try {
             test1();
+            test2();
         } catch (Exception e) {
             //e.printStackTrace();
             System.out.println("In main: Exception: " + e.getMessage());
-        }
-        finally {
+        } finally {
             IO.println("OK Bye");
         }
     }
+
+    static SecretKey createConstantKey() {
+        return new SecretKeySpec(
+                Hex.decode("000102030405060708090a0b0c0d0e0f"), "AES");
+    }
+
+    /**
+     * Encrypt the passed in data pText using GCM with the passed in parameters
+     * and incorporating aData into the GCM MAC calculation.
+     *
+     * @param key   secret key to use.
+     * @param iv    the IV to use with GCM.
+     * @param pText the plain text input to the cipher.
+     * @param aData the associated data to be included in the GCM MAC.
+     * @return the cipher text.
+     *
+     */
+    static byte[] gcmEncryptWithAAD(SecretKey key,
+                                    byte[] iv,
+                                    byte[] pText,
+                                    byte[] aData)
+            throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
+        GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+        cipher.updateAAD(aData);
+        return cipher.doFinal(pText);
+    }
+
+    /**
+     * Decrypt the passed in cipher text cText using GCM with the passed in
+     * parameters and incorporating aData into the GCM MAC calculation.
+     *
+     * @param key   secret key to use.
+     * @param iv    the IV originally used with GCM.
+     * @param cText the encrypted cipher text.
+     * @param aData the associated data to be included in the GCM MAC.
+     * @return the plain text.
+     */
+    static byte[] gcmDecryptWithAAD(SecretKey key,
+                                    byte[] iv,
+                                    byte[] cText,
+                                    byte[] aData)
+            throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
+        AEADParameterSpec spec = new AEADParameterSpec(iv, 128, aData);
+        cipher.init(Cipher.DECRYPT_MODE, key, spec);
+        return cipher.doFinal(cText);
+    }
+
+
     static void test1() throws Exception {
         try {
-            Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
+            Cipher _ = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
             KeyGenerator keyGen = KeyGenerator.getInstance("AES", "BCFIPS");
             keyGen.init(256);
             SecretKey aesKey = keyGen.generateKey();
@@ -56,11 +109,24 @@ public class Main {
                     new AEADParameterSpec(nonce, 96, assocData));
             byte[] plain = dec.doFinal(encrypted);
             System.out.println("dText: " + Hex.toHexString(plain));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("In test1: Exception: " + e.getMessage());
             //e.printStackTrace();
             throw e;
         }
+    }
+
+    static void test2() throws Exception {
+        System.out.println("In test2");
+        SecretKey aesKey = createConstantKey();
+        byte[] iv = Hex.decode("bbaa99887766554433221100");
+        String data = "hello, world!";
+        byte[] msg = Strings.toByteArray(data);
+        byte[] aad = Strings.toByteArray("now is the time!");
+        byte[] enc = gcmEncryptWithAAD(aesKey, iv, msg, aad);
+        byte[] dec = gcmDecryptWithAAD(aesKey, iv, enc, aad);
+        System.out.println("data: " + data);
+        System.out.println("enc:  " + Hex.toHexString(enc));
+        System.out.println("dec:  " + new String(dec));
     }
 }
