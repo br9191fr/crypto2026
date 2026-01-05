@@ -97,6 +97,7 @@ public class Main {
 
     static void test1() throws Exception {
         try {
+            IO.println("test1 start");
             Cipher _ = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
             KeyGenerator keyGen = KeyGenerator.getInstance("AES", "BCFIPS");
             keyGen.init(256);
@@ -122,10 +123,11 @@ public class Main {
             //e.printStackTrace();
             throw e;
         }
+        IO.println("test1 stop");
     }
 
     static void test2() throws Exception {
-        System.out.println("In test2");
+        IO.println("test2 start");
         SecretKey aesKey = createConstantKey();
         byte[] iv = Hex.decode("bbaa99887766554433221100");
         String data = "hello, world!";
@@ -136,10 +138,12 @@ public class Main {
         System.out.println("data: " + data);
         System.out.println("enc:  " + Hex.toHexString(enc));
         System.out.println("dec:  " + new String(dec));
+        IO.println("test2 stop");
     }
 
 
     static void test_tls1() throws Exception {
+        IO.println("test_tls1 start");
         PrivateCredential cred = PrivateCredential.createSelfSignedCredentials();
 
         KeyStore store = KeyStore.getInstance("JKS");
@@ -154,5 +158,6 @@ public class Main {
         store.store(fOut, "storePass".toCharArray());
         System.out.println("store saved");
         fOut.close();
+        IO.println("test_tls1 stop");
     }
 }
