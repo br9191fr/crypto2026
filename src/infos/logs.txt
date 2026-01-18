@@ -1,0 +1,9 @@
+test1 start
+oText: 000102030405060708090a0b0c0d0e0f1011121314151617181910111213141516171819
+len_in = 36, len_out = 48
+cText: 6c7b97974eec6e43cb9c198a18972b55ed45f196416a31606eea6b2005d4596aadbeb4a362636edb1468e609f7245e59
+In test1: Exception: Error finalising cipher data: mac check in GCM failed
+In main: Exception: Error finalising cipher data: mac check in GCM failed
+OK Bye
+
+
