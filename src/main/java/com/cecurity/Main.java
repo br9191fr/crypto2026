@@ -13,7 +13,6 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.*;
-import javax.lang.model.util.AbstractTypeVisitor6;
 
 
 import org.bouncycastle.jcajce.spec.AEADParameterSpec;
@@ -35,8 +34,8 @@ public class Main {
         Security.addProvider(new BouncyCastleJsseProvider("fips:BCFIPS"));
         try {
             //test2();
-            test1();
-            test1();
+            test1(false);
+            test1(true);
             //test_tls1();
         } catch (Exception e) {
             //e.printStackTrace();
@@ -102,16 +101,20 @@ public class Main {
     }
 
 
-    static void test1() throws Exception {
+    static void test1(boolean withError) throws Exception {
         try {
-            IO.println("test1 start");
+            if (withError) {
+                IO.println("\ntest1 start with error\n----");
+            }
+            else {
+                IO.println("\ntest1 start without error\n----");
+            }
             Cipher _ = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
             KeyGenerator keyGen = KeyGenerator.getInstance("AES", "BCFIPS");
             keyGen.init(256);
             SecretKey aesKey = keyGen.generateKey();
             byte[] data = Hex.decode("000102030405060708090A0B0C0D0E0F1011121314151617181910111213141516171819");
             byte[] assocData = Hex.decode("1011121314151617181910111213141516171891");
-            byte[] assocDatb = Hex.decode("10111213141516171891");
             byte[] nonce = Hex.decode("202122232425262728292a2b2c");
             Cipher enc = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
             System.out.println("oText: " + Hex.toHexString(data));
@@ -123,17 +126,25 @@ public class Main {
             int len_out = encrypted.length;
             System.out.println("len_in = " + len_in + ", len_out = " + len_out);
             // create Error here
-            encrypted[0] = (byte) ~encrypted[0];
+            if (withError) {
+                encrypted[0] = (byte) ~encrypted[0];
+            }
             System.out.println("cText: " + Hex.toHexString(encrypted));
             Cipher dec = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
             dec.init(Cipher.DECRYPT_MODE, aesKey,
                     new AEADParameterSpec(nonce, 96, assocData));
-            byte[] plain = dec.doFinal(encrypted);
-            int len_plain = plain.length;
-            System.out.println("len_plain = " + len_plain);
-            System.out.println("dText: " + Hex.toHexString(plain));
+            int len_dec = dec.getOutputSize(len_out);
+            IO.println("len_dec = " + len_dec);
+            byte[] decBuf = new byte[len_dec];
+            int len_final = dec.update(encrypted, 0, encrypted.length, decBuf, 0);
+            IO.println("len_final = " + len_final);
+            len_final += dec.doFinal(decBuf, len_final);
+            IO.println("len_final = " + len_final);
+            //byte[] plain = dec.doFinal(encrypted);
+            //int len_plain = plain.length;
+            IO.println("dText: " + Hex.toHexString(decBuf, 0, len_final));
         } catch (Exception e) {
-            System.out.println("In test1: Exception: " + e.getMessage());
+            IO.println("In test1: Exception: " + e.getMessage());
             //e.printStackTrace();
             throw e;
         }
