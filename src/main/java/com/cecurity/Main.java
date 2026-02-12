@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
 
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
@@ -29,7 +31,7 @@ public class Main {
         try {
             test2();
             test_gcm_256(false);
-            test_gcm_256(false);
+            test_gcm_256(true);
             test_tls1();
             writeToFileZipFileContents("test.zip", "output.txt");
         } catch (Exception e) {
@@ -108,6 +110,11 @@ public class Main {
             KeyGenerator keyGen = KeyGenerator.getInstance("AES", "BCFIPS");
             keyGen.init(256);
             SecretKey aesKey = keyGen.generateKey();
+            IO.println("AES Key :"+ Hex.toHexString(aesKey.getEncoded())+" Len:"+aesKey.getEncoded().length);
+            /*
+            saving AES key
+             */
+            String saveKey = Hex.toHexString(aesKey.getEncoded());
             byte[] data = Hex.decode("000102030405060708090A0B0C0D0E0F1011121314151617181910111213141516171819");
             byte[] assocData = Hex.decode("1011121314151617181910111213141516171891");
             byte[] nonce = Hex.decode("202122232425262728292a2b2c");
@@ -126,8 +133,11 @@ public class Main {
             }
             System.out.println("cText: " + Hex.toHexString(encrypted));
             Cipher dec = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
-            dec.init(Cipher.DECRYPT_MODE, aesKey,
-                    new AEADParameterSpec(nonce, 96, assocData));
+            /*
+             Restore saved AES key
+             */
+            SecretKey savedKey2 = new SecretKeySpec(Hex.decode(saveKey), "AES");
+            dec.init(Cipher.DECRYPT_MODE, savedKey2, new AEADParameterSpec(nonce, 96, assocData));
             int len_dec = dec.getOutputSize(len_out);
             IO.println("len_dec = " + len_dec);
             byte[] decBuf = new byte[len_dec];
@@ -137,9 +147,10 @@ public class Main {
             IO.println("len_final = " + len_final);
             IO.println("dText: " + Hex.toHexString(decBuf, 0, len_final));
         } catch (Exception e) {
-            IO.println("In test1: Exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+            IO.println("----------------------------\nIn test1: Exception: " + e.getMessage());
+            IO.println("----------------------------");
+            //e.printStackTrace();
+            //throw e;
         }
         IO.println("test1 stop");
     }
@@ -189,7 +200,8 @@ public class Main {
 
         // Open zip file and create output file with
         // try-with-resources statement
-        IO.println("In writeToFileZipFileContents: zipFileName = " + zipFileName);
+        IO.println("\n\nIn writeToFileZipFileContents: zipFileName = " + zipFileName);
+        IO.println("Reading zip file:"+java.nio.file.Paths.get(zipFileName));
         try (
                 java.util.zip.ZipFile zf =
                         new java.util.zip.ZipFile(zipFileName);
@@ -199,13 +211,13 @@ public class Main {
             // Enumerate each entry
             IO.println("Enter loop");
             int count = 0;
-            for (java.util.Enumeration entries =
-                 zf.entries(); entries.hasMoreElements();) {
+            Enumeration<? extends ZipEntry> entries;
+            for (entries = zf.entries(); entries.hasMoreElements();) {
                 // Get the entry name and write it to the output file
-                String newLine = System.getProperty("line.separator");
-                String zipEntryName =
-                        ((java.util.zip.ZipEntry)entries.nextElement()).getName() +
-                                newLine;
+                String newLine;
+                newLine = System.lineSeparator();
+                String zipEntryName;
+                zipEntryName = new StringBuilder().append(entries.nextElement().getName()).append(newLine).toString();
                 //IO.println("zipEntryName = " + zipEntryName);
                 writer.write(zipEntryName, 0, zipEntryName.length());
                 count++;
