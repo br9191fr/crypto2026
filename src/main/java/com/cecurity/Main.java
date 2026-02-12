@@ -30,7 +30,7 @@ public class Main {
             test2();
             test_gcm_256(false);
             test_gcm_256(false);
-            //test_tls1();
+            test_tls1();
         } catch (Exception e) {
             //e.printStackTrace();
             System.out.println("In main: Exception: " + e.getMessage());
