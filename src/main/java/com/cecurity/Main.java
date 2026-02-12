@@ -134,12 +134,10 @@ public class Main {
             IO.println("len_final = " + len_final);
             len_final += dec.doFinal(decBuf, len_final);
             IO.println("len_final = " + len_final);
-            //byte[] plain = dec.doFinal(encrypted);
-            //int len_plain = plain.length;
             IO.println("dText: " + Hex.toHexString(decBuf, 0, len_final));
         } catch (Exception e) {
             IO.println("In test1: Exception: " + e.getMessage());
-            //e.printStackTrace();
+            e.printStackTrace();
             throw e;
         }
         IO.println("test1 stop");
