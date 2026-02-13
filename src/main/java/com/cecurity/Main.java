@@ -96,7 +96,7 @@ public class Main {
     }
 
 
-    static void test_gcm_256(boolean withError) throws Exception {
+    static void test_gcm_256(boolean withError) {
         try {
             if (withError) {
                 IO.println("\ntest_gcm_256 running with error\n----");
@@ -177,8 +177,8 @@ public class Main {
 
         store.load(null, null);
 
-        store.setKeyEntry("key", cred.getPrivateKey(), "keyPass".toCharArray(),
-                new Certificate[]{cred.getCertificate()});
+        store.setKeyEntry("key", cred.privateKey(), "keyPass".toCharArray(),
+                new Certificate[]{cred.certificate()});
         System.out.println("store created");
         FileOutputStream fOut = new FileOutputStream("basic.jks");
 
