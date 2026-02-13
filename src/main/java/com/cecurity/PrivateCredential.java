@@ -1,12 +1,15 @@
 package com.cecurity;
 
 import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.*;
 import java.util.Date;
-import java.security.GeneralSecurityException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.cert.X509Certificate;
-import java.security.PrivateKey;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.spec.ECGenParameterSpec;
 
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -43,6 +46,7 @@ public class PrivateCredential {
 
         return new Date((secs + (hoursInFuture * 60 * 60)) * 1000);
     }
+
     private static long serialNumberBase = System.currentTimeMillis();
 
 
@@ -109,5 +113,64 @@ public class PrivateCredential {
         keyPair.initialize(new ECGenParameterSpec(curveName));
 
         return keyPair.generateKeyPair();
+    }
+
+    public static PKIXCertPathValidatorResult validateCertPath(
+            X509Certificate taCert, X509Certificate caCert, X509Certificate eeCert)
+            throws GeneralSecurityException {
+        List<X509Certificate> certchain = new ArrayList<X509Certificate>();
+        certchain.add(eeCert);
+        certchain.add(caCert);
+        CertPath certPath = CertificateFactory.getInstance("X.509", "BCFIPS")
+                .generateCertPath(certchain);
+        Set<TrustAnchor> trust = new HashSet<TrustAnchor>();
+        trust.add(new TrustAnchor(taCert, null));
+        CertPathValidator certPathValidator = CertPathValidator.getInstance("PKIX", "BCFIPS");
+        PKIXParameters param = new PKIXParameters(trust);
+        param.setRevocationEnabled(false);
+        param.setDate(new Date());
+        return (PKIXCertPathValidatorResult) certPathValidator.validate(certPath, param);
+    }
+
+    public static PKIXCertPathValidatorResult validateCertPathWithCrl(
+            X509Certificate taCert, X509CRL taCrl, X509Certificate caCert,
+            X509CRL caCrl, X509Certificate eeCert)
+            throws GeneralSecurityException {
+        List<X509Certificate> certchain = new ArrayList<X509Certificate>();
+        certchain.add(eeCert);
+        certchain.add(caCert);
+        CertPath certPath = CertificateFactory.getInstance("X.509", "BCFIPS")
+                .generateCertPath(certchain);
+        Set<TrustAnchor> trust = new HashSet<TrustAnchor>();
+        trust.add(new TrustAnchor(taCert, null));
+        Set crls = new HashSet();
+        crls.add(caCrl);
+        crls.add(taCrl);
+        CertStore crlsStore = CertStore.getInstance("Collection",
+                new CollectionCertStoreParameters(crls), "BCFIPS");
+        CertPathValidator certPathValidator = CertPathValidator.getInstance("PKIX", "BCFIPS");
+        PKIXParameters param = new PKIXParameters(trust);
+        param.addCertStore(crlsStore);
+        param.setDate(new Date());
+        return (PKIXCertPathValidatorResult) certPathValidator.validate(certPath, param);
+    }
+
+    /**
+     * Simple method to convert an X509CertificateHolder to an X509Certificate
+     * using the java.security.cert.CertificateFactory class.
+     */
+    public static X509Certificate convertX509CertificateHolder(
+            X509CertificateHolder certHolder)
+            throws GeneralSecurityException, CertificateException, NoSuchProviderException, IOException {
+        try {
+            CertificateFactory cFact = CertificateFactory.getInstance("X.509", "BC");
+
+            var cert = (X509Certificate) cFact.generateCertificate(
+                    new ByteArrayInputStream(
+                            certHolder.getEncoded()));
+            return cert;
+        } catch (CertificateException | NoSuchProviderException | IOException e) {
+            throw new GeneralSecurityException("Failed to convert X509CertificateHolder", e);
+        }
     }
 }
