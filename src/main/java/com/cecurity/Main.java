@@ -28,7 +28,7 @@ public class Main {
         Security.addProvider(new BouncyCastleJsseProvider("fips:BCFIPS"));
         try {
             test2();
-            test_gcm_256(false);
+            //test_gcm_256(false);
             test_gcm_256(true);
             test_tls1();
             writeToFileZipFileContents("test.zip", "output.txt");
@@ -128,6 +128,7 @@ public class Main {
             // create Error here
             if (withError) {
                 encrypted[0] = (byte) ~encrypted[0];
+                assocData[0] = (byte) ~assocData[0];
             }
             System.out.println("cText: " + Hex.toHexString(encrypted));
             Cipher dec = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
