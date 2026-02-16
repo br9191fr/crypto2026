@@ -58,12 +58,9 @@ public record PrivateCredential(X509Certificate certificate, PrivateKey privateK
         return new Date((secs + ((long) hoursInFuture * 60 * 60)) * 1000);
     }
 
-
-
     public static synchronized BigInteger calculateSerialNumber() {
         return BigInteger.valueOf(serialNumberBase++);
     }
-
 
     /**
      * Build a sample self-signed V1 certificate to use as a trust anchor, or
@@ -255,6 +252,51 @@ public record PrivateCredential(X509Certificate certificate, PrivateKey privateK
         ContentSigner signer = new JcaContentSignerBuilder(sigAlg)
                 .setProvider("BCFIPS").build(signerKey);
 
+        return certBldr.build(signer);
+    }
+    /**
+     * Create a general end-entity certificate for use in verifying digital
+     * signatures.
+     *
+     * @param signerCert certificate carrying the public key that will later
+     * be used to verify this certificate's signature.
+     * @param signerKey private key used to generate the signature in the
+     * certificate.
+     * @param sigAlg the signature algorithm to sign the certificate with.
+     * @param certKey public key to be installed in the certificate.
+     * @return an X509CertificateHolder containing the V3 certificate.
+     */
+    public static X509CertificateHolder createEndEntity(
+            X509CertificateHolder signerCert, PrivateKey signerKey,
+            String sigAlg, PublicKey certKey)
+            throws CertIOException, GeneralSecurityException,
+            OperatorCreationException
+    {
+        X500NameBuilder x500NameBld = new X500NameBuilder(BCStyle.INSTANCE)
+                .addRDN(BCStyle.C, "AU")
+                .addRDN(BCStyle.ST, "Victoria")
+                .addRDN(BCStyle.L, "Melbourne")
+                .addRDN(BCStyle.O, "The Legion of the Bouncy Castle")
+                .addRDN(BCStyle.CN, "Demo End-Entity Certificate");
+        X500Name subject = x500NameBld.build();
+        X509v3CertificateBuilder certBldr = new JcaX509v3CertificateBuilder(
+                signerCert.getSubject(),
+                calculateSerialNumber(),
+                calculateDate(0),
+                calculateDate(24 * 31),
+                subject,
+                certKey);
+        JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
+        certBldr.addExtension(Extension.authorityKeyIdentifier,
+                        false, extUtils.createAuthorityKeyIdentifier(signerCert))
+                .addExtension(Extension.subjectKeyIdentifier,
+                        false, extUtils.createSubjectKeyIdentifier(certKey))
+                .addExtension(Extension.basicConstraints,
+                        true, new BasicConstraints(false))
+                .addExtension(Extension.keyUsage,
+                        true, new KeyUsage(KeyUsage.digitalSignature));
+        ContentSigner signer = new JcaContentSignerBuilder(sigAlg)
+                .setProvider("BC").build(signerKey);
         return certBldr.build(signer);
     }
 }
