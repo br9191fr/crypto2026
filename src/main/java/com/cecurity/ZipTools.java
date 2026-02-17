@@ -78,6 +78,7 @@ public class ZipTools {
                 }
             }
         }
+        System.out.println("Saving JSON");
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.writeValue(new File(outputJsonPath), root);
