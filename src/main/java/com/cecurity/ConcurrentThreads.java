@@ -1,12 +1,17 @@
 package com.cecurity;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.lang.ScopedValue;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.StructuredTaskScope.Subtask;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class ConcurrentThreads {
     private static final List<String> sharedList = new ArrayList<>();
@@ -18,7 +23,7 @@ public class ConcurrentThreads {
     public static void main(String[] args) {
         step1();
         step2();
-
+        runConcurrentlyConfiguredRandomTasks();
 
     }
 
@@ -47,6 +52,12 @@ public class ConcurrentThreads {
         System.out.println("Final list: " + sharedList);
         System.out.println("Finished step1");
     }
+
+    /**
+     * Helper method for step2 to demonstrate StructuredTaskScope usage
+     * This method showcases how to use StructuredTaskScope to manage multiple tasks concurrently,
+     * handling exceptions, and retrieving results from subtasks.
+     */
     private static void step2() {
         System.out.println("Starting step2");
         // Open a new StructuredTaskScope
@@ -72,5 +83,38 @@ public class ConcurrentThreads {
     }
     private static synchronized void addInfo() {
         sharedList.add(String.format("OK"));
+    }
+    private static void runConcurrentlyConfiguredRandomTasks() {
+        var subtasks = IntStream.range(0, 5)
+                .mapToObj(i -> (Callable<Integer>) () -> randomTask(1000, 700))
+                .collect(Collectors.toList());
+
+        try (var scope = StructuredTaskScope.open(StructuredTaskScope.Joiner.<Integer>allSuccessfulOrThrow(),
+                cf -> cf.withTimeout(Duration.ofMillis(1000)))) {
+            subtasks.forEach(scope::fork);
+            Stream<Subtask<Integer>> s = scope.join();
+            s.forEach(r -> System.out.println("Result: " + r.get()));
+        } catch (InterruptedException e) {
+            System.out.println("InterruptedException");
+        } catch (StructuredTaskScope.TimeoutException e) {
+            System.out.println("TimeoutException");
+        } catch (StructuredTaskScope.FailedException e) {
+            Throwable cause = e.getCause();
+            System.out.println("FailedException: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
+        }
+    }
+    static Integer randomTask(int maxDuration, int threshold) throws InterruptedException, TooSlowException {
+        int t = new Random().nextInt(maxDuration);
+        if (t > threshold) {
+            throw new TooSlowException("Duration " + t + " greater than threshold " + threshold);
+        }
+        Thread.sleep(t);
+        System.out.println("Duration: " + t);
+        return Integer.valueOf(t);
+    }
+    static class TooSlowException extends Exception {
+        public TooSlowException(String s) {
+            super(s);
+        }
     }
 }
