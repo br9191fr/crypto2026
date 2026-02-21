@@ -109,7 +109,7 @@ public class ConcurrentThreads {
             throw new TooSlowException("Duration " + t + " greater than threshold " + threshold);
         }
         Thread.sleep(t);
-        System.out.println("Duration: " + t);
+        System.out.println("Task duration -> " + t);
         return Integer.valueOf(t);
     }
     static class TooSlowException extends Exception {
