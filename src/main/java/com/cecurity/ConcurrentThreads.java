@@ -82,12 +82,12 @@ public class ConcurrentThreads {
         sharedList.add(value);
     }
     private static synchronized void addInfo() {
-        sharedList.add(String.format("OK"));
+        sharedList.add("OK");
     }
     private static void runConcurrentlyConfiguredRandomTasks() {
         var subtasks = IntStream.range(0, 5)
-                .mapToObj(i -> (Callable<Integer>) () -> randomTask(1000, 700))
-                .collect(Collectors.toList());
+                .mapToObj(_ -> (Callable<Integer>) () -> randomTask(1000, 700))
+                .toList();
 
         try (var scope = StructuredTaskScope.open(StructuredTaskScope.Joiner.<Integer>allSuccessfulOrThrow(),
                 cf -> cf.withTimeout(Duration.ofMillis(1000)))) {
@@ -110,7 +110,7 @@ public class ConcurrentThreads {
         }
         Thread.sleep(t);
         System.out.println("Task duration -> " + t);
-        return Integer.valueOf(t);
+        return t;
     }
     static class TooSlowException extends Exception {
         public TooSlowException(String s) {
