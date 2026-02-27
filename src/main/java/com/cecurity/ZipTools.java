@@ -34,8 +34,8 @@ public class ZipTools {
             System.out.println("Usage: java ZipTools <zipFilePath> <outputJsonPath>");
             return;
         }
-        String zipFilePath = "test.zip"; // args[0];
-        String outputJsonPath = "test.json"; //args[1];
+        String zipFilePath = args[0];
+        String outputJsonPath = args[1];
 
         Node root = new Node("root", "directory");
 
@@ -44,9 +44,10 @@ public class ZipTools {
         System.out.println("Starting really");
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
             ZipEntry entry;
-
+            //final Enumeration<? extends ZipEntry> entries = zis.entries();
             while ((entry = zis.getNextEntry()) != null) {
-
+            //while (entries.hasMoreElements()) {
+                //final ZipEntry entry = entries.nextElement();
                 String entryName = entry.getName();
                 String[] parts = entryName.split("/");
 
@@ -61,6 +62,8 @@ public class ZipTools {
 
                     if (isLast && !entry.isDirectory()) {
                         Node fileNode = new Node(part, "file");
+                        var lg = entry.getCompressedSize();
+                        System.out.println("Longueur :" + lg);
                         fileNode.size = entry.getSize();
                         parent.children.add(fileNode);
                     } else {

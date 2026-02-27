@@ -9,7 +9,6 @@ import java.util.concurrent.Executors;
 import java.lang.ScopedValue;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.StructuredTaskScope.Subtask;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -20,11 +19,11 @@ public class ConcurrentThreads {
     static final Callable<String> task1 = () -> { return "Hello World"; };
     static final Callable<Integer> task2 = () -> { return 42; };
 
-    public static void main(String[] args) {
+    static void main() {
         step1();
         step2();
         runConcurrentlyConfiguredRandomTasks();
-
+        IO.println("Done");
     }
 
     private static void step1() {
@@ -101,6 +100,7 @@ public class ConcurrentThreads {
         } catch (StructuredTaskScope.FailedException e) {
             Throwable cause = e.getCause();
             System.out.println("FailedException: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
+            throw new RuntimeException(cause);
         }
     }
     static Integer randomTask(int maxDuration, int threshold) throws InterruptedException, TooSlowException {
