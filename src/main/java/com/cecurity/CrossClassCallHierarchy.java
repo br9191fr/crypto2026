@@ -13,6 +13,8 @@ import com.github.javaparser.resolution.declarations.*;
 
 import java.io.File;
 import java.util.*;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class CrossClassCallHierarchy {
 
@@ -33,6 +35,8 @@ public class CrossClassCallHierarchy {
         setupSymbolSolver(sourceRoot);
 
         parseProject(sourceRoot);
+
+        exportToGraphViz("callgraph.dot");
 
         System.out.println("\n=== CROSS CLASS CALL GRAPH ===\n");
 
@@ -65,7 +69,21 @@ public class CrossClassCallHierarchy {
      */
     private static void parseProject(File dir)
             throws Exception {
+        ParserConfiguration config =
+                new ParserConfiguration()
 
+                        // Enable modern Java syntax
+                        .setLanguageLevel(
+                                ParserConfiguration.LanguageLevel.JAVA_25)
+
+                        // Store lexical info (useful for tools)
+                        .setStoreTokens(true)
+
+                        // Better error handling
+                        .setAttributeComments(false);
+
+        // Apply globally to StaticJavaParser
+        //StaticJavaParser.setConfiguration(config);
         for (File file :
                 Objects.requireNonNull(dir.listFiles())) {
 
@@ -159,4 +177,30 @@ public class CrossClassCallHierarchy {
                     indent + 4);
         }
     }
+    private static void exportToGraphViz(String file)
+            throws IOException {
+
+        FileWriter writer = new FileWriter(file);
+
+        writer.write("digraph CallGraph {\n");
+        writer.write("rankdir=LR;\n");
+        writer.write("node [shape=box, style=filled];\n");
+
+        for (String caller : callGraph.keySet()) {
+
+            for (String callee :
+                    callGraph.get(caller)) {
+
+                writer.write("\"" + caller + "\" -> \""
+                        + callee + "\";\n");
+            }
+        }
+
+        writer.write("}\n");
+        writer.close();
+
+        System.out.println(
+                "\nDOT file generated: " + file);
+    }
+
 }

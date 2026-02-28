@@ -85,7 +85,7 @@ public class ConcurrentThreads {
     }
     private static void runConcurrentlyConfiguredRandomTasks() {
         var subtasks = IntStream.range(0, 5)
-                .mapToObj(_ -> (Callable<Integer>) () -> randomTask(1000, 700))
+                .mapToObj(i -> (Callable<Integer>) () -> randomTask(1000, 700))
                 .toList();
 
         try (var scope = StructuredTaskScope.open(StructuredTaskScope.Joiner.<Integer>allSuccessfulOrThrow(),

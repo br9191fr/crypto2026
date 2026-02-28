@@ -45,7 +45,7 @@ class CollectingJoiner<T> implements StructuredTaskScope.Joiner<T, Stream<T>> {
     private static void testCollectingJoiner() {
         List<Callable<Integer>> subtasks = IntStream
                 .range(0, 10)
-                .mapToObj(_ -> (Callable<Integer>) () -> randomTask(1000, 200))
+                .mapToObj(i -> (Callable<Integer>) () -> randomTask(1000, 200))
                 .collect(Collectors.toList());
 
         try {

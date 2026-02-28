@@ -2,3 +2,6 @@
  java -cp crypto3-0.2.jar  com.cecurity.MyThreads
  java -cp crypto3-0.2.jar  com.cecurity.Main
  java -cp crypto3-0.2.jar  com.cecurity.ConcurrentThreads
+ brew install graphviz
+ dot -V
+ dot -Tsvg callgraph.dot -o callgraph.svg

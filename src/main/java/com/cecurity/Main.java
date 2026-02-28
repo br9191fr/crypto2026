@@ -30,7 +30,7 @@ public class Main {
             test2();
             //test_gcm_256(false);
             test_gcm_256(true);
-            test_tls1();
+            //test_tls1();
             writeToFileZipFileContents("test.zip", "output.txt");
         } catch (Exception e) {
             //e.printStackTrace();
@@ -104,7 +104,7 @@ public class Main {
             else {
                 IO.println("\ntest_gcm_256 running without error\n----");
             }
-            Cipher _ = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
             KeyGenerator keyGen = KeyGenerator.getInstance("AES", "BCFIPS");
             keyGen.init(256);
             SecretKey aesKey = keyGen.generateKey();
@@ -169,7 +169,7 @@ public class Main {
         IO.println("test2 stop");
     }
 
-
+    /*
     static void test_tls1() throws Exception {
         IO.println("test_tls1 start");
         PrivateCredential cred = PrivateCredential.createSelfSignedCredentials();
@@ -188,6 +188,7 @@ public class Main {
         fOut.close();
         IO.println("test_tls1 stop");
     }
+    */
     public static void writeToFileZipFileContents(String zipFileName,
                                                   String outputFileName)
             throws java.io.IOException {
