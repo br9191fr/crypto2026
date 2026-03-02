@@ -23,8 +23,9 @@ public class CallHierarchyGenerator {
             System.out.println("Usage: java CallHierarchyGenerator <JavaFile>");
             return;
         }
-
-        List<String> lines = Files.readAllLines(Paths.get(args[0]));
+        var p = Paths.get(args[0]);
+        List<String> lines = Files.readAllLines(p);
+        //List<String> lines = Files.readAllLines(Paths.get(args[0]));
 
         buildCallGraph(lines);
 
